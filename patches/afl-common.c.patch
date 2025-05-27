@@ -1,0 +1,107 @@
+diff --git a/src/afl-common.c b/src/afl-common.c
+index 736c9f3..103bd5a 100644
+--- a/src/afl-common.c
++++ b/src/afl-common.c
+@@ -59,25 +59,97 @@ u8  last_intr = 0;
+   #define AFL_PATH "/usr/local/lib/afl/"
+ #endif
+ 
++#ifdef __MVS__
++
++// copied from: https://github.com/libuv/libuv/blob/v1.x/src/unix/os390-syscalls.c
++int scandir(const char* maindir, struct dirent*** namelist,
++            int (*filter)(const struct dirent*),
++            int (*compar)(const struct dirent**,
++            const struct dirent **)) {
++  struct dirent** nl;
++  struct dirent** nl_copy;
++ struct dirent* dirent;
++  unsigned count;
++  size_t allocated;
++  DIR* mdir;
++
++  nl = NULL;
++  count = 0;
++  allocated = 0;
++  mdir = opendir(maindir);
++  if (!mdir)
++    return -1;
++
++  for (;;) {
++    dirent = readdir(mdir);
++    if (!dirent)
++      break;
++    if (!filter || filter(dirent)) {
++      struct dirent* copy;
++      copy = (struct dirent*)malloc(sizeof(*copy));
++      if (!copy)
++        goto error;
++      memcpy(copy, dirent, sizeof(*copy));
++
++      nl_copy = (struct dirent**)realloc(nl, sizeof(*copy) * (count + 1));
++	if (nl_copy == NULL) {
++        free(copy);
++        goto error;
++      }
++
++      nl = nl_copy;
++      nl[count++] = copy;
++    }
++  }
++
++  qsort(nl, count, sizeof(struct dirent *),
++       (int (*)(const void *, const void *)) compar);
++
++  closedir(mdir);
++
++ *namelist = nl;
++  return count;
++
++error:
++  while (count > 0) {
++    dirent = nl[--count];
++    free(dirent);
++  }
++  free(nl);
++  closedir(mdir);
++  errno = ENOMEM;
++  return -1;
++}
++
++char *strsep(char **str, const char *sep)
++{
++        char *s = *str, *end;
++        if (!s) return NULL;
++        end = s + strcspn(s, sep);
++        if (*end) *end++ = 0;
++        else end = 0;
++        *str = end;
++        return s;
++}
++
++#endif
++
+ void *afl_memmem(const void *haystack, size_t haystacklen, const void *needle,
+                  size_t needlelen) {
+ 
+   if (unlikely(needlelen > haystacklen)) { return NULL; }
+ 
+   for (u32 i = 0; i <= haystacklen - needlelen; ++i) {
+-
+     if (unlikely(memcmp(haystack + i, needle, needlelen) == 0)) {
+-
+       return (void *)(haystack + i);
+-
+     }
+-
+   }
+ 
+   return (void *)NULL;
+-
+ }
+ 
++
++
+ void set_sanitizer_defaults() {
+ 
+   /* Set sane defaults for ASAN if nothing else is specified. */

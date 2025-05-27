@@ -1,0 +1,20 @@
+diff --git a/src/afl-fuzz-init.c b/src/afl-fuzz-init.c
+index cf8d319..47dbdc6 100644
+--- a/src/afl-fuzz-init.c
++++ b/src/afl-fuzz-init.c
+@@ -29,6 +29,15 @@
+ #include <string.h>
+ #include "cmplog.h"
+ 
++#if 0
++#include <dirent.h>
++int alphasort(const struct dirent **a, const struct dirent **b)
++{
++        return strcoll((*a)->d_name, (*b)->d_name);
++}
++#endif
++
++
+ #ifdef HAVE_AFFINITY
+ 
+ /* bind process to a specific cpu. Returns 0 on failure. */

@@ -1,0 +1,19 @@
+diff --git a/include/common.h b/include/common.h
+index 7c665c9..20629bb 100644
+--- a/include/common.h
++++ b/include/common.h
+@@ -39,6 +39,14 @@
+ 
+ #define STRINGIFY_VAL_SIZE_MAX (16)
+ 
++#ifdef __MVS__
++#include <dirent.h>
++static inline int alphasort(const struct dirent **a, const struct dirent **b)
++{
++        return strcoll((*a)->d_name, (*b)->d_name);
++}
++#endif
++
+ u32  check_binary_signatures(u8 *fn);
+ void detect_file_args(char **argv, u8 *prog_in, bool *use_stdin);
+ void print_suggested_envs(char *mispelled_env);
