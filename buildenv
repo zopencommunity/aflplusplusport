@@ -129,9 +129,11 @@ zopen_get_version()
   ## This function runs after the 'install' step of the build is run.
 #}
 
-#zopen_pre_patch(){
+zopen_pre_patch(){
   ## This function runs before the 'patch' step of the build is run.
-#}
+  export CFLAGS="$CFLAGS $CPPFLAGS"
+  export LDFLAGS="$LDFLAGS $LIBS"  
+}
 
 #zopen_pre_terminate(){
   ## This function runs before 'zopen build' terminates.
@@ -155,9 +157,9 @@ zopen_get_version()
 #export ZOPEN_CONFIGURE_MINIMAL="" ## Configuration program will not be passed CFLAGS, LDFLAGS, CPPFLAGS options but will get them from env vars.
 #export ZOPEN_CONFIGURE_OPTS="" ## Options to pass to configuration program (defaults to '--prefix=')
 #export ZOPEN_EXTRA_CONFIGURE_OPTS="" ## Extra configure options to pass to configuration program. (defaults to '')
-export ZOPEN_INSTALL_OPTS="install" ## Options to pass to installation program (defaults to 'install')
+export ZOPEN_INSTALL_OPTS="PREFIX=\${ZOPEN_INSTALL_DIR} install" ## Options to pass to installation program (defaults to 'install')
 #export ZOPEN_MAKE_MINIMAL="" ## Build program will not be passed CFLAGS, LDFLAGS, CPPFLAGS options but will get them from env vars.
-export ZOPEN_MAKE_OPTS="binary-only PREFIX=\$ZOPEN_INSTALL_DIR/ AFL_NO_X86=1 NO_UNICORN_ARM64=1 NO_CORESIGHT=1" ## Options to pass to build program (defaults to '-j')
+export ZOPEN_MAKE_OPTS="source-only PREFIX=\${ZOPEN_INSTALL_DIR} AFL_NO_X86=1 NO_UNICORN_ARM64=1 NO_CORESIGHT=1" ## Options to pass to build program (defaults to '-j')
 #export ZOPEN_PATCH_DIR="" ## Specify directory from which patches should be applied.
 
 ###

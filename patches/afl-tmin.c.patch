@@ -1,0 +1,26 @@
+diff --git a/src/afl-tmin.c b/src/afl-tmin.c
+index b8ac250..9f1ed25 100644
+--- a/src/afl-tmin.c
++++ b/src/afl-tmin.c
+@@ -64,6 +64,10 @@
+   #include <Python.h>
+ #endif
+ 
++#ifdef __MVS__
++    extern char** environ;
++#endif /* __MVS__ */
++
+ extern void destroy_custom_mutators(afl_state_t *);
+ void        list_init(list_t *list) {
+ 
+@@ -1352,6 +1356,10 @@ int main(int argc, char **argv_orig, char **envp) {
+ 
+   if (optind == argc || !in_file || !output_file) { usage(argv[0]); }
+ 
++#ifdef __MVS__
++    envp = environ;
++#endif /* __MVS__ */
++
+   check_environment_vars(envp);
+ 
+   if (getenv("AFL_NO_FORKSRV")) {             /* if set, use the fauxserver */

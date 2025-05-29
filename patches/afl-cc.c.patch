@@ -1,0 +1,25 @@
+diff --git a/src/afl-cc.c b/src/afl-cc.c
+index 85642d7..53cb599 100644
+--- a/src/afl-cc.c
++++ b/src/afl-cc.c
+@@ -40,6 +40,10 @@
+ #include <sys/stat.h>
+ #include <sys/mman.h>
+ 
++#ifdef __MVS__
++    extern char** environ;
++#endif /* __MVS__ */
++
+ #if (LLVM_MAJOR - 0 == 0)
+   #undef LLVM_MAJOR
+ #endif
+@@ -3573,6 +3577,9 @@ int main(int argc, char **argv, char **envp) {
+ 
+   aflcc_state_t *aflcc = malloc(sizeof(aflcc_state_t));
+   aflcc_state_init(aflcc, (u8 *)argv[0]);
++#ifdef __MVS__
++    envp = environ;
++#endif /* __MVS__ */
+ 
+   check_environment_vars(envp);
+ 

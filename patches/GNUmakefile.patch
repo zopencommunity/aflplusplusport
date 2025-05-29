@@ -1,14 +1,12 @@
 diff --git a/GNUmakefile b/GNUmakefile
-index 6605c25..e5f95dd 100644
+index 6605c25..259714c 100644
 --- a/GNUmakefile
 +++ b/GNUmakefile
-@@ -202,6 +202,11 @@ ifeq "$(SYS)" "Haiku"
+@@ -202,6 +202,9 @@ ifeq "$(SYS)" "Haiku"
    #SPECIAL_PERFORMANCE += -DUSEMMAP=1
  endif
  
 +ifeq "$(SYS)" "OS/390"
-+  override CFLAGS  += ${CPPFLAGS}
-+  override LDFLAGS += ${LIBS}
 +endif
 +
  AFL_FUZZ_FILES = $(wildcard src/afl-fuzz*.c)

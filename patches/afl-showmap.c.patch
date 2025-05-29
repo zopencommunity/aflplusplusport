@@ -1,0 +1,26 @@
+diff --git a/src/afl-showmap.c b/src/afl-showmap.c
+index 6c6c248..1981aad 100644
+--- a/src/afl-showmap.c
++++ b/src/afl-showmap.c
+@@ -64,6 +64,10 @@
+ #include <sys/types.h>
+ #include <sys/resource.h>
+ 
++#ifdef __MVS__
++    extern char** environ;
++#endif /* __MVS__ */
++
+ static afl_state_t *afl;
+ 
+ static char *stdin_file;               /* stdin file                        */
+@@ -1360,6 +1364,10 @@ int main(int argc, char **argv_orig, char **envp) {
+   if (fsrv->qemu_mode && !mem_limit_given) { fsrv->mem_limit = MEM_LIMIT_QEMU; }
+   if (unicorn_mode && !mem_limit_given) { fsrv->mem_limit = MEM_LIMIT_UNICORN; }
+ 
++#ifdef __MVS__
++    envp = environ;
++#endif /* __MVS__ */
++
+   check_environment_vars(envp);
+ 
+   if (getenv("AFL_NO_FORKSRV")) {             /* if set, use the fauxserver */
