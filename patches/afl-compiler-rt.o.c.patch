@@ -1,0 +1,142 @@
+diff --git a/instrumentation/afl-compiler-rt.o.c b/instrumentation/afl-compiler-rt.o.c
+index cba6436..c7c11e9 100644
+--- a/instrumentation/afl-compiler-rt.o.c
++++ b/instrumentation/afl-compiler-rt.o.c
+@@ -51,7 +51,7 @@ __attribute__((weak)) void __sanitizer_symbolize_pc(void *, const char *fmt,
+ #include <errno.h>
+ 
+ #include <sys/mman.h>
+-#if !defined(__HAIKU__) && !defined(__OpenBSD__)
++#if !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(__MVS__)
+   #include <sys/syscall.h>
+ #endif
+ #ifndef USEMMAP
+@@ -68,6 +68,8 @@ __attribute__((weak)) void __sanitizer_symbolize_pc(void *, const char *fmt,
+   #include "snapshot-inl.h"
+ #endif
+ 
++#define NO_TLS
++
+ /* This is a somewhat ugly hack for the experimental 'trace-pc-guard' mode.
+    Basically, we need to make sure that the forkserver is initialized after
+    the LLVM-generated runtime initialization pass, not before. */
+@@ -305,9 +307,8 @@ static void __afl_map_shm_fuzz() {
+ 
+     }
+ 
+-    map =
+-        (u8 *)mmap(0, MAX_FILE + sizeof(u32), PROT_READ, MAP_SHARED, shm_fd, 0);
+-
++    //map = (u8 *)mmap(0, MAX_FILE + sizeof(u32), PROT_READ, MAP_SHARED, shm_fd, 0);
++    map = (u8 *)anon_mmap(0, MAX_FILE + sizeof(u32));
+ #else
+     u32 shm_id = atoi(id_str);
+     map = (u8 *)shmat(shm_id, NULL, 0);
+@@ -475,7 +476,7 @@ static void __afl_map_shm(void) {
+ 
+       if (__afl_map_addr) {
+ 
+-        munmap((void *)__afl_map_addr, __afl_final_loc);
++        anon_munmap((void *)__afl_map_addr, __afl_final_loc);
+ 
+       } else {
+ 
+@@ -505,15 +506,14 @@ static void __afl_map_shm(void) {
+     /* map the shared memory segment to the address space of the process */
+     if (__afl_map_addr) {
+ 
+-      shm_base =
+-          mmap((void *)__afl_map_addr, __afl_map_size, PROT_READ | PROT_WRITE,
+-               MAP_FIXED_NOREPLACE | MAP_SHARED, shm_fd, 0);
+-
++      // shm_base = mmap((void *)__afl_map_addr, __afl_map_size, PROT_READ | PROT_WRITE,
++      //         MAP_FIXED_NOREPLACE | MAP_SHARED, shm_fd, 0);
++	shm_base = anon_mmap((void *)__afl_map_addr, __afl_map_size);
+     } else {
+ 
+-      shm_base = mmap(0, __afl_map_size, PROT_READ | PROT_WRITE, MAP_SHARED,
+-                      shm_fd, 0);
+-
++      //shm_base = mmap(0, __afl_map_size, PROT_READ | PROT_WRITE, MAP_SHARED,
++      //                shm_fd, 0);
++      shm_base = anon_mmap(0, __afl_map_size);
+     }
+ 
+     close(shm_fd);
+@@ -577,10 +577,12 @@ static void __afl_map_shm(void) {
+ 
+              __afl_map_addr) {
+ 
++#if 0
+     __afl_area_ptr = (u8 *)mmap(
+         (void *)__afl_map_addr, __afl_map_size, PROT_READ | PROT_WRITE,
+         MAP_FIXED_NOREPLACE | MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+-
++#endif
++    __afl_area_ptr = (u8 *)anon_mmap((void *)__afl_map_addr, __afl_map_size);
+     if (__afl_area_ptr == MAP_FAILED) {
+ 
+       fprintf(stderr, "can not acquire mmap for address %p\n",
+@@ -689,8 +691,9 @@ static void __afl_map_shm(void) {
+     }
+ 
+     /* map the shared memory segment to the address space of the process */
+-    shm_base = mmap(0, sizeof(struct cmp_map), PROT_READ | PROT_WRITE,
+-                    MAP_SHARED, shm_fd, 0);
++    //shm_base = mmap(0, sizeof(struct cmp_map), PROT_READ | PROT_WRITE,
++    //                MAP_SHARED, shm_fd, 0);
++    shm_base = anon_mmap(0, sizeof(struct cmp_map));
+     if (shm_base == MAP_FAILED) {
+ 
+       close(shm_fd);
+@@ -780,7 +783,7 @@ static void __afl_unmap_shm(void) {
+ 
+ #ifdef USEMMAP
+ 
+-    munmap((void *)__afl_area_ptr, __afl_map_size);
++    anon_munmap((void *)__afl_area_ptr, __afl_map_size);
+ 
+ #else
+ 
+@@ -792,7 +795,8 @@ static void __afl_unmap_shm(void) {
+ 
+              __afl_map_addr) {
+ 
+-    munmap((void *)__afl_map_addr, __afl_map_size);
++    anon_munmap((void *)__afl_map_addr, __afl_map_size);
++
+ 
+   }
+ 
+@@ -804,7 +808,7 @@ static void __afl_unmap_shm(void) {
+ 
+ #ifdef USEMMAP
+ 
+-    munmap((void *)__afl_cmp_map, __afl_map_size);
++    anon_munmap((void *)__afl_cmp_map, __afl_map_size);
+ 
+ #else
+ 
+@@ -1312,9 +1316,10 @@ __attribute__((constructor(1))) void __afl_auto_second(void) {
+       free(__afl_area_ptr);
+ 
+     if (__afl_map_addr)
+-      ptr = (u8 *)mmap((void *)__afl_map_addr, __afl_first_final_loc,
+-                       PROT_READ | PROT_WRITE,
+-                       MAP_FIXED_NOREPLACE | MAP_SHARED | MAP_ANONYMOUS, -1, 0);
++      //ptr = (u8 *)mmap((void *)__afl_map_addr, __afl_first_final_loc,
++      //                 PROT_READ | PROT_WRITE,
++      //                 MAP_FIXED_NOREPLACE | MAP_SHARED | MAP_ANONYMOUS, -1, 0);
++    	ptr = (u8 *)anon_mmap((void *)__afl_map_addr, __afl_first_final_loc);
+     else
+       ptr = (u8 *)malloc(__afl_first_final_loc);
+ 
+@@ -2313,7 +2318,7 @@ static int area_is_valid(void *ptr, size_t len) {
+ 
+ #ifdef __HAIKU__
+   long r = _kern_write(__afl_dummy_fd[1], -1, ptr, len);
+-#elif defined(__OpenBSD__)
++#elif defined(__OpenBSD__) || defined(__MVS__)
+   long r = write(__afl_dummy_fd[1], ptr, len);
+ #else
+   long r = syscall(SYS_write, __afl_dummy_fd[1], ptr, len);

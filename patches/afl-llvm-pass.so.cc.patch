@@ -1,0 +1,12 @@
+diff --git a/instrumentation/afl-llvm-pass.so.cc b/instrumentation/afl-llvm-pass.so.cc
+index 3fb644a..c61a9a6 100644
+--- a/instrumentation/afl-llvm-pass.so.cc
++++ b/instrumentation/afl-llvm-pass.so.cc
+@@ -20,6 +20,7 @@
+  */
+ 
+ #define AFL_LLVM_PASS
++#define NO_TLS
+ 
+ #include "config.h"
+ #include "debug.h"
