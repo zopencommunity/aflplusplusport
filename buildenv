@@ -1,5 +1,5 @@
 # Update bump details accordingly. Use bump check to confirm.
-# bump: AFLplusplus-version /AFLPLUSPLUS_VERSION="(.*)"/ https://github.com/AFLplusplus/AFLplusplus/tags|re:/href="([^"]+)"/$1/|re:/v([0-9]+\.[0-9]+)c/$1/
+# bump: AFLplusplus-version /AFLPLUSPLUS_VERSION="(.*)"/ https://github.com/AFLplusplus/AFLplusplus/tags|re:/href="([^"]+)"/$1/|re:/v?([0-9]+\.[0-9]+c?)/$1/
 AFLPLUSPLUS_VERSION="4.32c" # Specify a stable release
 export ZOPEN_STABLE_TAG="v${AFLPLUSPLUS_VERSION}"
 
